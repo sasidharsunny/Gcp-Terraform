@@ -2,40 +2,25 @@
 terraform {
   required_providers {
     google = {
-      source = "hashicorp/google"
+      source  = "hashicorp/google"
       version = "5.39.1"
     }
   }
 }
 
 provider "google" {
-  # Configuration options
+  project     = "silent-robot-427709-j7"
+  region      = "us-central1"
+  zone        = "us-central1-a"
+  credentials = "keys.json"
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
 resource "google_storage_bucket" "auto-expire" {
-  name          = "no-public-access-bucket"
-  location      = "US"
-  force_destroy = true
-  project = "tt-dev-001"
+  name                     = "terraform-buucket"
+  location                 = "us-central1"
+  force_destroy            = true
   public_access_prevention = "enforced"
 }
 
-resource "google_storage_bucket" "auto-expire2" {
-  name          = "no-public-access-bucket2"
-  location      = "US"
-  force_destroy = true
-  project = "tt-dev-001"
-  public_access_prevention = "enforced"
-}
