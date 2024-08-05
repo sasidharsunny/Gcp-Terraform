@@ -9,10 +9,10 @@ terraform {
 }
 
 provider "google" {
-  project     = "silent-robot-427709-j7"
-  region      = "us-central1"
-  zone        = "us-central1-a"
-  
+  project = "silent-robot-427709-j7"
+  region  = "us-central1"
+  zone    = "us-central1-a"
+
 }
 
 
