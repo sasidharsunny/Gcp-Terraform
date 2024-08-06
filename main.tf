@@ -17,8 +17,8 @@ provider "google" {
 
 
 
-resource "google_storage_bucket" "auto-expire" {
-  name                     = "terraform-buucket2"
+resource "google_storage_bucket" "static-site" {
+  name                     = "terraformnew0909090"
   location                 = "us-east1"
   force_destroy            = true
   public_access_prevention = "enforced"
