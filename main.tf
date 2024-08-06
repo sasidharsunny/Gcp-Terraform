@@ -25,7 +25,7 @@ resource "google_storage_bucket" "auto-expire" {
 }
 
 
-resource "google_storage_bucket" "auto-expire" {
+resource "google_storage_bucket" "auto-expire-auto" {
   name                     = "terraform-buucket2"
   location                 = "us-central1"
   force_destroy            = true
