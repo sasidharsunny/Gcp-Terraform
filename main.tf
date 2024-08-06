@@ -24,3 +24,11 @@ resource "google_storage_bucket" "auto-expire" {
   public_access_prevention = "enforced"
 }
 
+
+resource "google_storage_bucket" "auto-expire" {
+  name                     = "terraform-buucket2"
+  location                 = "us-central1"
+  force_destroy            = true
+  public_access_prevention = "enforced"
+}
+
