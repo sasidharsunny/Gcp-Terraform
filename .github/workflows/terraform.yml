@@ -1,9 +1,8 @@
-
 name: 'Terraform'
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "test-branch" ]
   pull_request:
 
 permissions:
@@ -47,9 +46,17 @@ jobs:
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
 
-      # On push to "main", build or change infrastructure according to Terraform configuration files
-      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
+    # Manual approval before applying Terraform changes
+    - name: Await Manual Approval
+      uses: hmarr/await-approval-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        # Optional: Add custom approval message
+        approval_message: 'Please approve the Terraform apply in production.'
+
+    # Apply the changes required to reach the desired state of the configuration
     - name: Terraform Apply
+      if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
       run: terraform apply -auto-approve -input=false
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
