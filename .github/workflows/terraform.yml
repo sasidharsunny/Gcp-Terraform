@@ -2,9 +2,8 @@ name: 'Terraform'
 
 on:
   push:
-    branches: [ "teat1-branch" ]
-  pull_request:
     branches: [ "test1-branch" ]
+  pull_request:
 
 permissions:
   contents: read
@@ -13,6 +12,7 @@ jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
+    environment: production
 
     defaults:
       run:
@@ -36,48 +36,37 @@ jobs:
         GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
 
     - name: Terraform Plan
-      run: terraform plan -out=tfplan -input=false
+      run: terraform plan -input=false
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
 
-    - name: Upload Terraform Plan
-      uses: actions/upload-artifact@v3
-      with:
-        name: terraform-plan
-        path: tfplan
-
-  manual-approval:
-    name: 'Manual Approval and Terraform Apply'
+  manual_approval:
+    name: 'Manual Approval'
     runs-on: ubuntu-latest
     needs: terraform
+    environment:
+      name: production
+      # Requires environment protection rule setup with manual approval
+      url: https://github.com/sasidharsunny/Gcp-Terraform/settings/environments/production
 
     steps:
-    - name: Manual Approval
-      run: |
-        echo "Waiting for manual approval..."
-        while true; do
-          echo "Approve this job in the GitHub UI to proceed."
-          sleep 60
-        done
-      if: ${{ github.event_name == 'workflow_dispatch' }}
+    - name: Awaiting approval
+      run: echo "Awaiting manual approval..."
 
+  terraform_apply:
+    name: 'Terraform Apply'
+    runs-on: ubuntu-latest
+    needs: manual_approval
+    steps:
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Download Terraform Plan
-      uses: actions/download-artifact@v3
-      with:
-        name: terraform-plan
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
       with:
         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-    - name: Terraform Init
-      run: terraform init
-
     - name: Terraform Apply
-      run: terraform apply -input=false tfplan
+      run: terraform apply -auto-approve -input=false
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
