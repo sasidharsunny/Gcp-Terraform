@@ -33,6 +33,12 @@ jobs:
     - name: Terraform Init
       run: terraform init -upgrade
 
+    # Debug Terraform Init (optional)
+    - name: Debug Terraform Init
+      run: terraform init -upgrade -input=false
+      env:
+        TF_LOG: DEBUG
+
     # Check the formatting of Terraform files
     - name: Terraform Format
       run: terraform fmt -check
