@@ -17,10 +17,5 @@ provider "google" {
 
 
 
-resource "google_storage_bucket" "auto-expire" {
-  name                     = "terraform-buucket1"
-  location                 = "us-central1"
-  force_destroy            = true
-  public_access_prevention = "enforced"
-}
+
 
