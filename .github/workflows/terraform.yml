@@ -19,15 +19,19 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    # Clean up any old Terraform cache
+    - name: Clean up Terraform directory
+      run: rm -rf .terraform
+
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2 # Updated to v2
+      uses: hashicorp/setup-terraform@v2
       with:
         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
     # Initialize a new or existing Terraform working directory
     - name: Terraform Init
-      run: terraform init
+      run: terraform init -upgrade
 
     # Check the formatting of Terraform files
     - name: Terraform Format
