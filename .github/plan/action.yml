@@ -24,8 +24,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: List workspace contents
-      run: ls -R /home/runner/work/Gcp-Terraform/Gcp-Terraform
+    - name: List workspace contents for debugging
+      run: ls -R
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
