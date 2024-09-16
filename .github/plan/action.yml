@@ -27,14 +27,14 @@ runs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
-        terraform_version: ${{ inputs.terraforom_version }}
+        terraform_version: ${{ inputs.terraform_version }}
         terraform_wrapper: false
 
     - id: 'auth'
       name: 'Authenticate to Google Cloud'
       uses: 'google-github-actions/auth@v1'
       with:
-        credentials_json: ${{ inputs.GCP_SA_KEY }}
+        credentials_json: ${{ inputs.google_sa_key }}
 
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v0.6.0'
@@ -44,30 +44,29 @@ runs:
       working-directory: ${{ inputs.terraform_directory }}
       shell: bash
       run: |
-       echo "Ref name: ${{ github.ref_name }}"
-       echo "Target environment: $TARGET_ENV"
+        echo "Ref name: ${{ github.ref_name }}"
+        echo "Target environment: $TARGET_ENV"
 
-       if [ -d "${TARGET_ENV}/" ]; then
-       for dir in ${TARGET_ENV}/*/; do
-        if [ -d "$dir" ]; then
-          cd $dir
-          env=$(basename "$dir")
+        if [ -d "${TARGET_ENV}/" ]; then
+          for dir in ${TARGET_ENV}/*/; do
+            if [ -d "$dir" ]; then
+              cd $dir
+              env=$(basename "$dir")
 
-           echo "*************** TERRAFORM INIT and VALIDATE ******************"
-           echo "******* At environment: ${env} ********"
+              echo "*************** TERRAFORM INIT and VALIDATE ******************"
+              echo "******* At environment: ${env} ********"
 
-          terraform init -lock=false || exit 1
-          terraform validate || exit 1
+              terraform init -lock=false || exit 1
+              terraform validate || exit 1
 
-          cd - > /dev/null
+              cd - > /dev/null
+            fi
+          done
+        else
+          echo "*************** SKIPPING INIT ******************"
+          echo "Directory '${TARGET_ENV}' does not exist."
+          exit 1
         fi
-      done
-    else
-      echo "*************** SKIPPING INIT ******************"
-      echo "Directory '${TARGET_ENV}' does not exist."
-      exit 1
-    fi
-
 
     - name: Terraform Plan
       id: plan
