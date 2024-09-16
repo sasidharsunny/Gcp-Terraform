@@ -25,8 +25,10 @@ runs:
   using: "composite"
   steps:
     - name: List workspace contents for debugging
-      shell: bash  # Ensure 'shell' is specified
-      run: ls -R
+      shell: bash
+      run: |
+        echo "Listing contents of the Terraform directory:"
+        ls -R ${{ inputs.terraform_directory }}
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
@@ -46,7 +48,7 @@ runs:
     - name: Terraform Init and Validate
       id: init
       working-directory: ${{ inputs.terraform_directory }}
-      shell: bash  # Ensure 'shell' is specified here as well
+      shell: bash
       run: |
         echo "Ref name: ${{ github.ref_name }}"
         echo "Target environment: $TARGET_ENV"
@@ -74,7 +76,7 @@ runs:
     - name: Terraform Plan
       id: plan
       working-directory: ${{ inputs.terraform_directory }}
-      shell: bash  # Ensure 'shell' is specified here as well
+      shell: bash
       run: |
         echo 'plan<<EOF' >> $GITHUB_OUTPUT
         terraform plan -no-color -out=tfplan >> $GITHUB_OUTPUT
@@ -82,10 +84,11 @@ runs:
 
     - name: Save Artifact
       id: save-artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.pr_id }}-tf-plan
         path: ${{ inputs.terraform_directory }}/tfplan
+        include-hidden-files: true
 
     - name: Comment Plan
       id: comment-plan
