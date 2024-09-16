@@ -39,16 +39,16 @@ runs:
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v0.6.0'
 
-   - name: Terraform Init and Validate
-     id: init
-     working-directory: ${{ inputs.terraform_directory }}
-     shell: bash
-     run: |
+    - name: Terraform Init and Validate
+      id: init
+      working-directory: ${{ inputs.terraform_directory }}
+      shell: bash
+      run: |
        echo "Ref name: ${{ github.ref_name }}"
        echo "Target environment: $TARGET_ENV"
 
-    if [ -d "${TARGET_ENV}/" ]; then
-      for dir in ${TARGET_ENV}/*/; do
+       if [ -d "${TARGET_ENV}/" ]; then
+       for dir in ${TARGET_ENV}/*/; do
         if [ -d "$dir" ]; then
           cd $dir
           env=$(basename "$dir")
