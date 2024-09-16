@@ -1,0 +1,106 @@
+name: 'Terraform setup and plan'
+description: 'Setup Terraform and creates plan'
+inputs:
+  terraform_directory:
+    description: 'Directory that holds Terraform code'
+    required: true
+  terraform_sa: 
+    description: 'GCP service account used for Terraform actions'
+    required: true
+  terraform_version: 
+    description: 'Terraform Version'
+    required: true
+    default: 1.5.0
+  github_token: 
+    description: 'GitHub token for auth'
+    required: true
+  google_sa_key:
+    description: 'JSON key for GCP service account'
+    required: true
+  pr_id:
+    description: 'Pull request ID'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: List workspace contents for debugging
+      shell: bash
+      run: |
+        echo "Listing contents of the Terraform directory:"
+        ls -R ${{ inputs.terraform_directory }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ inputs.terraform_version }}
+        terraform_wrapper: false
+
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: ${{ inputs.google_sa_key }}
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v0.6.0'
+
+    - name: Terraform Init and Validate
+      id: init
+      working-directory: ${{ inputs.terraform_directory }}
+      shell: bash
+      run: |
+        echo "Ref name: ${{ github.ref_name }}"
+        echo "Target environment: $TARGET_ENV"
+
+        if [ -d "${TARGET_ENV}/" ]; then
+          for dir in ${TARGET_ENV}/*/; do
+            if [ -d "$dir" ]; then
+              cd $dir
+              env=$(basename "$dir")
+
+              echo "*************** TERRAFORM INIT and VALIDATE ******************"
+              echo "******* At environment: ${env} ********"
+
+              terraform init -lock=false || exit 1
+              terraform validate || exit 1
+
+              cd - > /dev/null
+            fi
+          done
+        else
+          echo "*************** SKIPPING INIT ******************"
+          echo "Directory '${TARGET_ENV}' does not exist."
+          exit 1
+
+    - name: Terraform Plan
+      id: plan
+      working-directory: ${{ inputs.terraform_directory }}
+      shell: bash
+      run: |
+        echo 'plan<<EOF' >> $GITHUB_OUTPUT
+        terraform plan -no-color -out=tfplan >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
+
+    - name: Save Artifact
+      id: save-artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.pr_id }}-tf-plan
+        path: ${{ inputs.terraform_directory }}/tfplan
+        include-hidden-files: true
+
+    - name: Comment Plan
+      id: comment-plan
+      uses: peter-evans/create-or-update-comment@v2
+      with:
+        token: ${{ inputs.github_token }}
+        issue-number: ${{ inputs.pr_id }}
+        body: |
+          Terraform Plan:
+
+          ```
+          ${{ steps.plan.outputs.plan }}
+          ```
+
+          Plan saved to GH artifacts.
