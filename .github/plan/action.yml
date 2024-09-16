@@ -25,6 +25,7 @@ runs:
   using: "composite"
   steps:
     - name: List workspace contents for debugging
+      shell: bash  # Ensure 'shell' is specified
       run: ls -R
 
     - name: Setup Terraform
@@ -45,7 +46,7 @@ runs:
     - name: Terraform Init and Validate
       id: init
       working-directory: ${{ inputs.terraform_directory }}
-      shell: bash
+      shell: bash  # Ensure 'shell' is specified here as well
       run: |
         echo "Ref name: ${{ github.ref_name }}"
         echo "Target environment: $TARGET_ENV"
@@ -69,12 +70,11 @@ runs:
           echo "*************** SKIPPING INIT ******************"
           echo "Directory '${TARGET_ENV}' does not exist."
           exit 1
-        fi
 
     - name: Terraform Plan
       id: plan
       working-directory: ${{ inputs.terraform_directory }}
-      shell: bash
+      shell: bash  # Ensure 'shell' is specified here as well
       run: |
         echo 'plan<<EOF' >> $GITHUB_OUTPUT
         terraform plan -no-color -out=tfplan >> $GITHUB_OUTPUT
