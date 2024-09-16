@@ -10,7 +10,7 @@ inputs:
   terraform_version: 
     description: 'Terraform Version'
     required: true
-    default: 1.2.9
+    default: 1.5.0
   github_token: 
     description: 'GitHub token for auth'
     required: true
@@ -34,8 +34,7 @@ runs:
       name: 'Authenticate to Google Cloud'
       uses: 'google-github-actions/auth@v1'
       with:
-        service_account: ${{ inputs.terraform_sa }}
-        credentials_json: ${{ inputs.google_sa_key }}
+        credentials_json: ${{ inputs.GCP_SA_KEY }}
 
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v0.6.0'
