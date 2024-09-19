@@ -57,8 +57,8 @@ jobs:
       run: |
         echo "Starting Terraform Plan"
         
-        if [ -d "terraform/" ]; then
-          for dir in terraform/*/; do
+        if [ -d "main/" ]; then
+          for dir in main/*/; do
             if [ -d "$dir" ]; then
               cd $dir
               env=$(basename "$dir")
@@ -77,7 +77,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: terraform-plans
-        path: terraform/**/*.out
+        path: main/**/*.out
 
   terraform_apply:
     runs-on: ubuntu-latest
