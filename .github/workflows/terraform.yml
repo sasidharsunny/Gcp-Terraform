@@ -1,59 +1,135 @@
-name: 'Terraform'
+name: Terraform Workflow
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
+  push:
+    branches:
+      - main  # Branch where terraform apply should run
+
+env:
+  TF_SA: ${{ secrets.GCP_SA_EMAIL }}
+  TERRAFORM_VERSION: "1.5.0"
+  TF_IN_AUTOMATION: "True"
 
 jobs:
-  terraform:
-    name: 'Terraform'
+  terraform_plan:
     runs-on: ubuntu-latest
-   
-    defaults:
-      run:
-        shell: bash
+    if: github.event_name == 'pull_request' && github.event.review.state != 'approved'
 
     steps:
-    # Checkout the repository to the GitHub Actions runner
-    - name: Checkout
-      uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-    # Clean up any old Terraform cache
-    - name: Clean up Terraform directory
-      run: rm -rf .terraform
-
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
-        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-    # Initialize a new or existing Terraform working directory
-    - name: Terraform Init
-      run: terraform init -upgrade
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-    # Debug Terraform Init (optional)
-    - name: Debug Terraform Init
-      run: terraform init -upgrade -input=false
-      env:
-        TF_LOG: DEBUG
-
-    # Check the formatting of Terraform files
-    - name: Terraform Format
-      run: terraform fmt -check
-      env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
-
-    # Generate an execution plan for Terraform
+    - name: Terraform Init, Upgrade and Validate
+      run: |
+        echo "Starting Terraform Init, Upgrade, and Validate"
+        
+        if [ -d "terraform/" ]; then
+          for dir in terraform/*/; do
+            if [ -d "$dir" ]; then
+              cd $dir
+              env=$(basename "$dir")
+              
+              echo "*************** TERRAFORM INIT, UPGRADE and VALIDATE in $dir ******************"
+              terraform init -upgrade || exit 1
+              terraform validate || exit 1
+              
+              cd - > /dev/null
+            fi
+          done
+        else
+          echo "Directory 'terraform' does not exist."
+          exit 1
+        fi
     - name: Terraform Plan
-      run: terraform plan -input=false
-      env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+      id: plan
+      shell: bash
+      run: |
+        echo "Starting Terraform Plan"
+        
+        if [ -d "terraform/" ]; then
+          for dir in terraform/*/; do
+            if [ -d "$dir" ]; then
+              cd $dir
+              env=$(basename "$dir")
+              
+              echo "*************** TERRAFORM PLAN in $dir ******************"
+              terraform plan -no-color -out=tfplan-${env}.out
+              
+              cd - > /dev/null
+            fi
+          done
+        else
+          echo "Directory 'terraform' does not exist."
+          exit 1
+        fi
+    - name: Upload Terraform Plans as Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-plans
+        path: terraform/**/*.out
 
-    # Apply the Terraform plan (only on push to main)
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main'
-      run: terraform apply -auto-approve -input=false
-      env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+  terraform_apply:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # Trigger on pushes to feature branch
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Download Terraform Plans
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        name: terraform-plans
+        path: terraform  # Directory to download the artifact to
+
+    - name: List Files in Terraform Directory
+      run: |
+        echo "Listing files in terraform directory:"
+        ls -R terraform
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Terraform Init and Apply
+      run: |
+        echo "Applying Terraform in environment."
+        
+        if [ -d "terraform/" ]; then
+          for dir in terraform/*/; do
+            if [ -d "$dir" ]; then
+              cd $dir
+              env=$(basename "$dir")
+              
+              echo "*************** TERRAFORM APPLY in $dir ******************"
+              if [ -f "tfplan-${env}.out" ]; then
+                terraform apply -auto-approve tfplan-${env}.out || exit 1
+              else
+                echo "Plan file tfplan-${env}.out not found in $dir."
+                exit 1
+              fi
+              
+              cd - > /dev/null
+            fi
+          done
+        else
+          echo "Directory 'terraform' does not exist."
+          exit 1
+        fi
