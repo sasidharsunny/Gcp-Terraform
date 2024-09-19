@@ -86,6 +86,7 @@ jobs:
         path: |
           ${TARGET_ENV}/**/*.out
           ${TARGET_ENV}/**/*.hcl
+        include-hidden-files: true
         
   terraform_apply:
     runs-on: ubuntu-latest
