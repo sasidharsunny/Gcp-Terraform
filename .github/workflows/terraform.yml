@@ -98,8 +98,8 @@ jobs:
       - name: Download Terraform Plans
         uses: dawidd6/action-download-artifact@v2
         with:
-          name: terraform-plans
-          path: terraform
+          name: terraform-artifacts
+          path: $TARGET_ENV
           
 
       - name: Setup Terraform
