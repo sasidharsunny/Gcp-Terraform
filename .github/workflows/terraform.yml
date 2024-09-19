@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - feature/rahultestbranch  # Branch where terraform apply should run
+      - main  # Branch where terraform apply should run
 
 env:
   TF_SA: ${{ secrets.GCP_SA_EMAIL }}
@@ -77,9 +77,9 @@ jobs:
           echo "Directory '${TARGET_ENV}' does not exist."
           exit 1
         fi
-    terraform_apply:
+  terraform_apply:
      runs-on: ubuntu-latest
-     if: github.ref == 'refs/heads/feature/rahultestbranch'  # Trigger on pushes to feature branch
+     if: github.ref == 'refs/heads/main'  # Trigger on pushes to feature branch
 
      steps:
       - name: Checkout code
@@ -88,7 +88,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-        terraform_version: ${{ env.TERRAFORM_VERSION }}
+         terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
