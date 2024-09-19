@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - main  # Branch where terraform apply should run
+      - main # Branch where terraform apply should run
 
 env:
   TF_SA: ${{ secrets.GCP_SA_EMAIL }}
