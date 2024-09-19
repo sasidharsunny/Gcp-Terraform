@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "google" {
-  project = "i-labs-420516"
+  project = "crafty-run-420513"
   region  = "us-central1"
   zone    = "us-central1-a"
 
