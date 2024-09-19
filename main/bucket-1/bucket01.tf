@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "google" {
-  project = "silent-robot-427709-j7"
+  project = "silent-roboot77896543"
   region  = "us-central1"
   zone    = "us-central1-a"
 
