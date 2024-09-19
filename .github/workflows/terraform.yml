@@ -82,8 +82,8 @@ jobs:
       with:
         name: terraform-artifacts
         path: |
-          ${TARGET_ENV}/**/*.out
-          ${TARGET_ENV}/**/*.hcl
+          main/**/*.out
+          main/**/*.hcl
 
 
         
