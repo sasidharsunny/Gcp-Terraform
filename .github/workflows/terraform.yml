@@ -34,7 +34,7 @@ jobs:
       run: |
         echo "Starting Terraform Init, Upgrade, and Validate"
         
-        if [ -d "terraform/" ]; then
+        if [ -d "main/" ]; then
           for dir in terraform/*/; do
             if [ -d "$dir" ]; then
               cd $dir
