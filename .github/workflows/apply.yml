@@ -1,0 +1,94 @@
+name: Terraform Apply
+
+# Trigger the workflow on push to the main branch (after PR merge)
+on:
+  push:
+    branches:
+      - main  # Adjust this to the branch where you want to apply changes
+
+env:
+  TF_SA: ${{ secrets.GCP_SA_EMAIL }}  # Use a secret for the service account email
+  TERRAFORM_VERSION: "1.5.0"
+  TF_IN_AUTOMATION: "True"
+  TARGET_ENV: "main"
+
+jobs:
+  terraform_apply:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0.6.0
+
+
+
+
+    - name: Download Plan and Lock Files
+      id: download-config
+      uses: dawidd6/action-download-artifact@v6
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        workflow: plan.yml  # Specify the workflow file where the artifact was created
+        pr: ${{ steps.pr-id.outputs.PR_NUMBER }}  # Use the PR number from your previous step
+        name: terraform-artifacts  # Artifact name with PR number
+        path: main  # Directory to download the artifact to
+        
+        
+    - name: Initialize Terraform
+      run: |
+        echo "Initializing Terraform in $TARGET_ENV"
+        if [ -d "${TARGET_ENV}/" ]; then
+          for dir in ${TARGET_ENV}/*/; do
+            if [ -d "$dir" ]; then
+              cd $dir
+              env=$(basename "$dir")
+              
+              echo "*************** INITIALIZING TERRAFORM in $dir ******************"
+              terraform init -upgrade || exit 1
+              
+              cd - > /dev/null
+            fi
+          done
+        else
+          echo "Directory '${TARGET_ENV}' does not exist."
+          exit 1
+        fi
+
+    - name: Apply Terraform Plan
+      shell: bash
+      run: |
+        echo "Applying Terraform Plan"
+        if [ -d "${TARGET_ENV}/" ]; then
+          for dir in ${TARGET_ENV}/*/; do
+            if [ -d "$dir" ]; then
+              cd $dir
+              env=$(basename "$dir")
+              
+              # Check if the Terraform plan file exists
+              if [ -f "tfplan-${env}.out" ]; then
+                echo "*************** APPLYING PLAN in $dir ******************"
+                terraform apply "tfplan-${env}.out" || exit 1
+              else
+                echo "Plan file tfplan-${env}.out not found in $dir"
+              fi
+              
+              cd - > /dev/null
+            fi
+          done
+        else
+          echo "Directory '${TARGET_ENV}' does not exist."
+          exit 1
+        fi
