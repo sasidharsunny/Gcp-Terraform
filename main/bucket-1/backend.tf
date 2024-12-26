@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "terraform-state-100"
+    bucket = "jenkinsnewbucket"
     prefix = "sasidhar-general01/bucket"
   }
 }
