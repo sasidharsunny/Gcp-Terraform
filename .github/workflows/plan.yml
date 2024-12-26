@@ -27,19 +27,14 @@ jobs:
       with:
         terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-    - name: Authenticate to GCP using Workload Identity Federation
-      uses: google-github-actions/auth@v1
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
       with:
-        workload_identity_provider: "projects/944128117791/locations/global/workloadIdentityPools/github-action-pool/providers/github-action-provider-01"
-        service_account: "jenkins-bucket@striped-device-417417.iam.gserviceaccount.com"
+        create_credentials_file: true
+        workload_identity_provider: 'projects/944128117791/locations/global/workloadIdentityPools/github-action-pool/providers/github-action-provider-01'
+        service_account: 'i-labs@striped-device-417417.iam.gserviceaccount.com'
 
-
-    - name: Debug Token
-      run: |
-       echo "Decoding GitHub OIDC Token..."
-       id_token=$(curl -s -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" $ACTIONS_ID_TOKEN_REQUEST_URL)
-       echo "Decoded ID Token:"
-       echo $id_token | base64 -d | jq '.'
 
 
 
