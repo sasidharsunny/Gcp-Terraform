@@ -31,7 +31,7 @@ jobs:
       uses: google-github-actions/auth@v1
       with:
         workload_identity_provider: "projects/944128117791/locations/global/workloadIdentityPools/github-action-pool/providers/github-action-provider-01"
-        service_account: "i-labs@striped-device-417417.iam.gserviceaccount.com"
+        service_account: "944128117791-compute@developer.gserviceaccount.com"
 
 
     - name: Debug Token
